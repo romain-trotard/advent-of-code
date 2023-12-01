@@ -1,0 +1,86 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strconv"
+)
+
+func getFilePath(fileName string) string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		log.Fatalf("Error getting runtime information")
+	}
+
+	absPath, err := filepath.Abs(filename)
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	// Get the directory of the source file
+	srcDir := filepath.Dir(absPath)
+
+	return filepath.Join(srcDir, fileName)
+}
+
+func isNumber(value string) bool {
+	_, err := strconv.Atoi(value)
+
+	return err == nil
+}
+
+func main() {
+	filePath := getFilePath("input.txt")
+
+	file, err := os.Open(filePath)
+	defer file.Close()
+
+	if err != nil {
+		log.Fatalf("Error when opening file: %s", err)
+	}
+	fileScanner := bufio.NewScanner(file)
+
+	fileScanner.Split(bufio.ScanLines)
+
+	count := 0
+
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		var values []string
+
+		for _, unicode := range line {
+			char := string(unicode)
+
+            // Not a number let's go next
+			if !isNumber(char) {
+				continue
+			}
+
+			values = append(values, char)
+		}
+
+        // Let's get the first and second value that constitute the final number of the line
+		var firstInt, secondInt string
+
+		switch numberInLines := len(values); {
+		case numberInLines > 1:
+			firstInt = values[0]
+			secondInt = values[len(values)-1]
+		case numberInLines == 1:
+			firstInt = values[0]
+			secondInt = values[0]
+		}
+
+        // Convert it
+		number, _ := strconv.Atoi(firstInt + secondInt)
+
+        // Add it to the final count
+		count += number
+	}
+
+	fmt.Println("The result is", count)
+}
