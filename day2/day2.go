@@ -1,0 +1,166 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
+)
+
+var maximumPossibleColors = Round{
+    Blue: 14,
+    Red: 12,
+    Green: 13,
+}
+
+type Round struct {
+	Blue  int
+	Red   int
+	Green int
+}
+
+type Game struct {
+	Id     int
+	Rounds []Round
+}
+
+func (game *Game) addRound(round Round) {
+	game.Rounds = append(game.Rounds, round)
+}
+
+func (game *Game) addStringRound(stringRound string) {
+	values := strings.Split(stringRound, ",")
+
+	round := Round{}
+
+	for _, value := range values {
+		roundColor := extractString(value)
+		number := extractInt(value)
+
+		switch roundColor {
+		case "blue":
+			round.Blue = number
+		case "red":
+			round.Red = number
+		case "green":
+			round.Green = number
+		}
+	}
+
+    game.addRound(round)
+}
+
+func (game *Game) addStringRounds(stringRounds string) {
+	rounds := strings.Split(stringRounds, ";")
+
+    for _, round := range rounds {
+        game.addStringRound(round)
+    }
+}
+
+func (game Game) isGameValid() bool {
+    for _, round := range  game.Rounds {
+        if round.Blue > maximumPossibleColors.Blue || round.Green > maximumPossibleColors.Green || round.Red > maximumPossibleColors.Red {
+            return false
+        }
+    }
+
+    return true
+}
+
+func convertToInt(value string) int {
+	integer, err := strconv.Atoi(value)
+
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	return integer
+}
+
+func extractContentWithRegex(regex string, value string) string {
+	reg, err := regexp.Compile(regex)
+
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	return reg.FindString(value)
+}
+
+func extractInt(value string) int {
+    return convertToInt(extractContentWithRegex("[0-9]+", value))
+}
+
+func extractString(value string) string {
+    return extractContentWithRegex("[a-z]+", value)
+}
+
+func getGameId(gameIdPart string) int {
+	return extractInt(gameIdPart)
+}
+
+func createGame(row string) Game {
+	game := Game{}
+
+	gameValues := strings.Split(row, ":")
+	gameIdPart := gameValues[0]
+	gameRoundPart := gameValues[1]
+
+	game.Id = getGameId(gameIdPart)
+
+    game.addStringRounds(gameRoundPart)
+
+	return game
+}
+
+func getFilePath(fileName string) string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		log.Fatalf("Error getting runtime information")
+	}
+
+	absPath, err := filepath.Abs(filename)
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	// Get the directory of the source file
+	srcDir := filepath.Dir(absPath)
+
+	return filepath.Join(srcDir, fileName)
+}
+
+func main() {
+	filePath := getFilePath("input.txt")
+
+	file, err := os.Open(filePath)
+	defer file.Close()
+
+	if err != nil {
+		log.Fatalf("Error when opening file: %s", err)
+	}
+	fileScanner := bufio.NewScanner(file)
+
+	fileScanner.Split(bufio.ScanLines)
+
+    count := 0
+
+
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+
+        game := createGame(line)
+
+        if game.isGameValid() {
+            count += game.Id
+        }
+    }
+
+    fmt.Println("Count", count)
+}
