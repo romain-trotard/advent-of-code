@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bufio"
+	"aoc/utils"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -24,23 +20,6 @@ var numberInLetter = []string{
 	"nine",
 }
 
-func getFilePath(fileName string) string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		log.Fatalf("Error getting runtime information")
-	}
-
-	absPath, err := filepath.Abs(filename)
-	if err != nil {
-		log.Fatalf("Error: %s", err)
-	}
-
-	// Get the directory of the source file
-	srcDir := filepath.Dir(absPath)
-
-	return filepath.Join(srcDir, fileName)
-}
-
 func isNumber(value string) bool {
 	_, err := strconv.Atoi(value)
 
@@ -48,22 +27,9 @@ func isNumber(value string) bool {
 }
 
 func main() {
-	filePath := getFilePath("input.txt")
-
-	file, err := os.Open(filePath)
-	defer file.Close()
-
-	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
-	}
-	fileScanner := bufio.NewScanner(file)
-
-	fileScanner.Split(bufio.ScanLines)
-
 	count := 0
 
-	for fileScanner.Scan() {
-		line := fileScanner.Text()
+	utils.ForEachFileLine("day1/input.txt", func(line string) {
 		var values []int
 		consecutiveLetters := ""
 
@@ -86,8 +52,8 @@ func main() {
 
 				values = append(values, index+1)
 
-                // Needs to keep the last letter, bad statement in the problem explanation for me...
-                consecutiveLetters = consecutiveLetters[len(consecutiveLetters)-1:]
+				// Needs to keep the last letter, bad statement in the problem explanation for me...
+				consecutiveLetters = consecutiveLetters[len(consecutiveLetters)-1:]
 				continue
 			}
 
@@ -114,7 +80,7 @@ func main() {
 
 		// Add it to the final count
 		count += number
-	}
+	})
 
 	fmt.Println("The result is", count)
 }

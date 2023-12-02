@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bufio"
+	"aoc/utils"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -162,29 +161,15 @@ func getFilePath(fileName string) string {
 }
 
 func main() {
-	filePath := getFilePath("input.txt")
-
-	file, err := os.Open(filePath)
-	defer file.Close()
-
-	if err != nil {
-		log.Fatalf("Error when opening file: %s", err)
-	}
-	fileScanner := bufio.NewScanner(file)
-
-	fileScanner.Split(bufio.ScanLines)
-
 	count := 0
 
-	for fileScanner.Scan() {
-		line := fileScanner.Text()
-
+    utils.ForEachFileLine("day2/input.txt", func(line string) {
 		game := createGame(line)
 
 		neededColors := game.getMaximumColorNeeded()
 
 		count += neededColors.Red * neededColors.Blue * neededColors.Green
-	}
+    })
 
 	fmt.Println("Count", count)
 }
