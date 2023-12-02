@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
-    "slices"
 )
 
-var numberInLetter = []string {
+var numberInLetter = []string{
 	"one",
 	"two",
 	"three",
@@ -79,19 +79,19 @@ func main() {
 					return strings.Contains(consecutiveLetters, v)
 				})
 
-                // Does not correspond to a number in string
+				// Does not correspond to a number in string
 				if index == -1 {
 					continue
 				}
 
-				values = append(values, index + 1)
+				values = append(values, index+1)
 
-                // Reset the value because there was a match
-				consecutiveLetters = ""
+                // Needs to keep the last letter, bad statement in the problem explanation for me...
+                consecutiveLetters = consecutiveLetters[len(consecutiveLetters)-1:]
 				continue
 			}
 
-            // Let's clear consecutive letters because we have a number
+			// Let's clear consecutive letters because we have a number
 			consecutiveLetters = ""
 
 			values = append(values, number)
