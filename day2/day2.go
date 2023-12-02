@@ -13,9 +13,9 @@ import (
 )
 
 var maximumPossibleColors = Round{
-    Blue: 14,
-    Red: 12,
-    Green: 13,
+	Blue:  14,
+	Red:   12,
+	Green: 13,
 }
 
 type Round struct {
@@ -52,25 +52,50 @@ func (game *Game) addStringRound(stringRound string) {
 		}
 	}
 
-    game.addRound(round)
+	game.addRound(round)
 }
 
 func (game *Game) addStringRounds(stringRounds string) {
 	rounds := strings.Split(stringRounds, ";")
 
-    for _, round := range rounds {
-        game.addStringRound(round)
-    }
+	for _, round := range rounds {
+		game.addStringRound(round)
+	}
 }
 
 func (game Game) isGameValid() bool {
-    for _, round := range  game.Rounds {
-        if round.Blue > maximumPossibleColors.Blue || round.Green > maximumPossibleColors.Green || round.Red > maximumPossibleColors.Red {
-            return false
-        }
+	for _, round := range game.Rounds {
+		if round.Blue > maximumPossibleColors.Blue || round.Green > maximumPossibleColors.Green || round.Red > maximumPossibleColors.Red {
+			return false
+		}
+	}
+
+	return true
+}
+
+func max(first int, second int) int {
+    if first < second {
+        return second
     }
 
-    return true
+    return first
+}
+
+func (game Game) getMaximumColorNeeded() Round {
+    // Trick: Initialize to 1 because I know I am going to multiply after
+	colors := Round{
+        Blue: 1,
+        Red: 1,
+        Green: 1,
+    }
+
+    for _, round := range game.Rounds {
+        colors.Blue = max(colors.Blue, round.Blue)
+        colors.Red = max(colors.Red, round.Red)
+        colors.Green = max(colors.Green, round.Green)
+    }
+
+	return colors
 }
 
 func convertToInt(value string) int {
@@ -94,11 +119,11 @@ func extractContentWithRegex(regex string, value string) string {
 }
 
 func extractInt(value string) int {
-    return convertToInt(extractContentWithRegex("[0-9]+", value))
+	return convertToInt(extractContentWithRegex("[0-9]+", value))
 }
 
 func extractString(value string) string {
-    return extractContentWithRegex("[a-z]+", value)
+	return extractContentWithRegex("[a-z]+", value)
 }
 
 func getGameId(gameIdPart string) int {
@@ -114,7 +139,7 @@ func createGame(row string) Game {
 
 	game.Id = getGameId(gameIdPart)
 
-    game.addStringRounds(gameRoundPart)
+	game.addStringRounds(gameRoundPart)
 
 	return game
 }
@@ -149,18 +174,17 @@ func main() {
 
 	fileScanner.Split(bufio.ScanLines)
 
-    count := 0
-
+	count := 0
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 
-        game := createGame(line)
+		game := createGame(line)
 
-        if game.isGameValid() {
-            count += game.Id
-        }
-    }
+		neededColors := game.getMaximumColorNeeded()
 
-    fmt.Println("Count", count)
+		count += neededColors.Red * neededColors.Blue * neededColors.Green
+	}
+
+	fmt.Println("Count", count)
 }
