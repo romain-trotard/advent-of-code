@@ -12,31 +12,17 @@ import (
     "slices"
 )
 
-var numberInLetterToNumberString = map[string]int{
-	"one":   1,
-	"two":   2,
-	"three": 3,
-	"four":  4,
-	"five":  5,
-	"six":   6,
-	"seven": 7,
-	"eight": 8,
-	"nine":  9,
+var numberInLetter = []string {
+	"one",
+	"two",
+	"three",
+	"four",
+	"five",
+	"six",
+	"seven",
+	"eight",
+	"nine",
 }
-
-func getNumberInLetterToNumberStringKeys() []string {
-	numberInLetterToNumberStringKeys := make([]string, 0, len(numberInLetterToNumberString))
-
-	for k := range numberInLetterToNumberString {
-		numberInLetterToNumberStringKeys = append(numberInLetterToNumberStringKeys, k)
-
-	}
-
-	return numberInLetterToNumberStringKeys
-}
-
-var numberInLetterToNumberStringKeys = getNumberInLetterToNumberStringKeys()
-
 
 func getFilePath(fileName string) string {
 	_, filename, _, ok := runtime.Caller(0)
@@ -89,7 +75,7 @@ func main() {
 			if err != nil {
 				consecutiveLetters += char
 
-				index := slices.IndexFunc(numberInLetterToNumberStringKeys, func(v string) bool {
+				index := slices.IndexFunc(numberInLetter, func(v string) bool {
 					return strings.Contains(consecutiveLetters, v)
 				})
 
@@ -98,7 +84,7 @@ func main() {
 					continue
 				}
 
-				values = append(values, numberInLetterToNumberString[numberInLetterToNumberStringKeys[index]])
+				values = append(values, index + 1)
 
                 // Reset the value because there was a match
 				consecutiveLetters = ""
@@ -110,7 +96,6 @@ func main() {
 
 			values = append(values, number)
 		}
-
 
 		// Let's get the first and second value that constitute the final number of the line
 		var firstInt, secondInt int
