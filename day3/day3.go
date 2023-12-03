@@ -6,11 +6,42 @@ import (
 	"strconv"
 )
 
-func isSpecialChar(value string) bool {
-	return !utils.IsNumber(value) && value != "."
+type Gear struct {
+	Numbers []int
 }
 
-func isCloseToSpecialChar(lines [][]string, rowIndex int, columnIndex int) bool {
+func (gear *Gear) AddNumber(value int) {
+	gear.Numbers = append(gear.Numbers, value)
+}
+
+func (gear Gear) GetCount() int {
+    if len(gear.Numbers) <= 1 {
+        return 0
+    }
+
+    count := 1
+
+    for _, value := range gear.Numbers {
+        count *= value
+    }
+
+    return count
+}
+
+type Point struct {
+	Row    int
+	Column int
+}
+
+var gearsByPoint = map[Point]Gear{}
+
+func isGear(value string) bool {
+	return value == "*"
+}
+
+func getCloseGearsPoint(lines [][]string, rowIndex int, columnIndex int) []Point {
+	closeGearsPoint := []Point{}
+
 	for i := -1; i <= 1; i++ {
 		for j := -1; j <= 1; j++ {
 			// Current char
@@ -30,13 +61,36 @@ func isCloseToSpecialChar(lines [][]string, rowIndex int, columnIndex int) bool 
 				continue
 			}
 
-			if isSpecialChar(lines[calcRowIndex][calcColumnIndex]) {
-				return true
+			if isGear(lines[calcRowIndex][calcColumnIndex]) {
+				closeGearsPoint = append(closeGearsPoint, Point{Row: calcRowIndex, Column: calcColumnIndex})
 			}
 		}
 	}
 
-	return false
+	return closeGearsPoint
+}
+
+func addGearPointsNumber(closeGearPoints []Point, stringNumber string) {
+	number, _ := strconv.Atoi(stringNumber)
+	deduplicatedGearPoints := map[Point]bool{}
+
+	for _, point := range closeGearPoints {
+		if _, ok := deduplicatedGearPoints[point]; !ok {
+			deduplicatedGearPoints[point] = true
+
+			gear, present := gearsByPoint[point]
+
+			if !present {
+				gear = Gear{Numbers: []int{}}
+				// gearsByPoint[point] = gear
+			}
+
+            // Don't know why I can't do commented lines...
+			// gear.AddNumber(number)
+			gear.Numbers = append(gear.Numbers, number)
+			gearsByPoint[point] = gear
+		}
+	}
 }
 
 func main() {
@@ -61,37 +115,34 @@ func main() {
 	// Loop on the array
 	for rowIndex := range lines {
 		stringNumber := ""
-		isCurrentNumberCloseToSpecialChar := false
+		closeGearPoints := []Point{}
 
 		for columnIndex, value := range lines[rowIndex] {
 			if utils.IsNumber(value) {
 				stringNumber += value
 
-				if isCloseToSpecialChar(lines, rowIndex, columnIndex) {
-					isCurrentNumberCloseToSpecialChar = true
-				}
-
+				closeGearPoints = append(closeGearPoints, getCloseGearsPoint(lines, rowIndex, columnIndex)...)
 			} else {
 				// Not a number gonna reset stuff
 				// But to begin let's make sure that the previous number was close to a special char
-				if isCurrentNumberCloseToSpecialChar {
-					number, _ := strconv.Atoi(stringNumber)
-
-					count += number
+				if len(closeGearPoints) > 0 {
+					addGearPointsNumber(closeGearPoints, stringNumber)
 				}
 
-				isCurrentNumberCloseToSpecialChar = false
+				closeGearPoints = []Point{}
 				stringNumber = ""
 			}
 		}
 
-        // Maybe there is no more no character so let's check if the last thing was a number
-		if isCurrentNumberCloseToSpecialChar {
-			number, _ := strconv.Atoi(stringNumber)
-
-			count += number
+		// Maybe there is no more no character so let's check if the last thing was a number
+		if len(closeGearPoints) > 0 {
+			addGearPointsNumber(closeGearPoints, stringNumber)
 		}
 	}
+
+    for _, gear := range gearsByPoint {
+        count += gear.GetCount()
+    }
 
 	fmt.Println("Result", count)
 }
