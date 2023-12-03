@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 func getFilePath(fileName string) string {
@@ -36,4 +37,10 @@ func ForEachFileLine(fileName string, callback func(line string)) {
 
         callback(line)
     }
+}
+
+func IsNumber(value string) bool {
+	_, err := strconv.Atoi(value)
+
+	return err == nil
 }
