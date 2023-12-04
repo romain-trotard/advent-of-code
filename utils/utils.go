@@ -44,3 +44,9 @@ func IsNumber(value string) bool {
 
 	return err == nil
 }
+
+func ConvertToInt(value string) (int, error) {
+	number, err := strconv.Atoi(value)
+
+	return number, err
+}
