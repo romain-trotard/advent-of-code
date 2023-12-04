@@ -4,7 +4,6 @@ import (
 	"aoc/utils"
 	"fmt"
 	"log"
-	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -14,6 +13,8 @@ type Game struct {
 	winningValues []int
 	myValues      []int
 }
+
+var numberOfCardForCardId = map[int]int{}
 
 func extractNumberValues(stringValues string) []int {
 	reg, err := regexp.Compile("[0-9]+")
@@ -32,45 +33,57 @@ func extractNumberValues(stringValues string) []int {
 		}
 	}
 
-    return values
+	return values
 }
 
-func createGame(line string) Game {
+func createGame(line string, cardNumber int) Game {
 	game := Game{}
 
 	lineParts := strings.Split(line, ":")
 	valuesParts := strings.Split(lineParts[1], "|")
 
-    game.winningValues = extractNumberValues(valuesParts[0])
-    game.myValues = extractNumberValues(valuesParts[1])
+	game.winningValues = extractNumberValues(valuesParts[0])
+	game.myValues = extractNumberValues(valuesParts[1])
 
-    return game
+	return game
 }
 
-func (game Game) getMyWinningValuesResult() int {
-    count := 0
+func (game Game) getNumberOfWinningNumber() int {
+	count := 0
 
-    for _, value := range game.myValues {
-        if slices.Contains(game.winningValues, value) {
-            count++
-        }
-    }
+	for _, value := range game.myValues {
+		if slices.Contains(game.winningValues, value) {
+			count++
+		}
+	}
 
-    if count == 0 {
-        return 0
-    }
-
-    return int(math.Pow(2, float64(count - 1)))
+	return count
 }
 
 func main() {
-    count := 0
+	count := 0
+	cardNumber := 1
 
 	utils.ForEachFileLine("day4/input.txt", func(line string) {
-        game := createGame(line)
+        // Increment with the real one card
+		numberOfCardForCardId[cardNumber]++
 
-        count += game.getMyWinningValuesResult()
+		game := createGame(line, cardNumber)
+
+		number := game.getNumberOfWinningNumber()
+
+		currentNumberOfCard := numberOfCardForCardId[cardNumber]
+
+		for i := 1; i <= number; i++ {
+			numberOfCardForCardId[cardNumber+i] += currentNumberOfCard
+		}
+
+		cardNumber++
 	})
 
-    fmt.Println("Result", count)
+	for _, value := range numberOfCardForCardId {
+		count += value
+	}
+
+	fmt.Println("Result", count)
 }
