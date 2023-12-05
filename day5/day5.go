@@ -37,8 +37,13 @@ func (myMap Map) GetDestinationValue(fromValue int) int {
 	return fromValue
 }
 
+type Seed struct {
+	From  int
+	Range int
+}
+
 type Data struct {
-	Seeds []int
+	Seeds []Seed
 	Maps  []Map
 }
 
@@ -65,8 +70,17 @@ func isSeeds(line string) bool {
 	return strings.Contains(line, "seeds:")
 }
 
-func extractSeeds(line string) []int {
-	return utils.ExtractNumberValues(line)
+func extractSeeds(line string) []Seed {
+	values := utils.ExtractNumberValues(line)
+	seeds := []Seed{}
+
+	for i := 0; i < len(values)/2; i++ {
+		seed := Seed{From: values[i*2], Range: values[i*2+1]}
+
+		seeds = append(seeds, seed)
+	}
+
+	return seeds
 }
 
 func isMapName(line string) bool {
@@ -115,11 +129,13 @@ func main() {
 
 	minLocation := math.MaxInt
 
-	for _, seedValue := range data.Seeds {
-		location := data.getLocationForSeedValue(seedValue)
+	for _, seed := range data.Seeds {
+		for seedValue := seed.From; seedValue < seed.From+seed.Range; seedValue++ {
+			location := data.getLocationForSeedValue(seedValue)
 
-		if location < minLocation {
-			minLocation = location
+			if location < minLocation {
+				minLocation = location
+			}
 		}
 	}
 
