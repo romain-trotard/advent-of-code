@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 )
 
@@ -49,4 +50,24 @@ func ConvertToInt(value string) (int, error) {
 	number, err := strconv.Atoi(value)
 
 	return number, err
+}
+
+func ExtractNumberValues(stringValues string) []int {
+	reg, err := regexp.Compile("[0-9]+")
+
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	values := []int{}
+
+	for _, v := range reg.FindAllString(stringValues, -1) {
+		number, err := ConvertToInt(v)
+
+		if err == nil {
+			values = append(values, number)
+		}
+	}
+
+	return values
 }

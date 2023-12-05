@@ -16,34 +16,14 @@ type Game struct {
 
 var numberOfCardForCardId = map[int]int{}
 
-func extractNumberValues(stringValues string) []int {
-	reg, err := regexp.Compile("[0-9]+")
-
-	if err != nil {
-		log.Fatalf("Error: %s", err)
-	}
-
-	values := []int{}
-
-	for _, v := range reg.FindAllString(stringValues, -1) {
-		number, err := utils.ConvertToInt(v)
-
-		if err == nil {
-			values = append(values, number)
-		}
-	}
-
-	return values
-}
-
 func createGame(line string, cardNumber int) Game {
 	game := Game{}
 
 	lineParts := strings.Split(line, ":")
 	valuesParts := strings.Split(lineParts[1], "|")
 
-	game.winningValues = extractNumberValues(valuesParts[0])
-	game.myValues = extractNumberValues(valuesParts[1])
+	game.winningValues = utils.ExtractNumberValues(valuesParts[0])
+	game.myValues = utils.ExtractNumberValues(valuesParts[1])
 
 	return game
 }
