@@ -3,6 +3,8 @@ package main
 import (
 	"aoc/utils"
 	"fmt"
+	"log"
+	"regexp"
 	"strings"
 )
 
@@ -35,15 +37,35 @@ func isDistanceData(line string) bool {
 	return strings.Contains(line, "Distance:")
 }
 
+func extractNumberOfLine(line string) int {
+	reg, err := regexp.Compile("[0-9]+")
+
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+
+	values := reg.FindAllString(line, -1)
+
+	stringValue := strings.Join(values, "")
+
+	number, err := utils.ConvertToInt(stringValue)
+
+	if err != nil {
+		log.Fatalf("Cannot convert to int the value %s. Got the errror: %s", stringValue, err)
+	}
+
+	return number
+}
+
 func main() {
 	var distances []int
 	var times []int
 
 	utils.ForEachFileLine("day6/input.txt", func(line string) {
 		if isTimeData(line) {
-			times = utils.ExtractNumberValues(line)
+			times = append(times, extractNumberOfLine(line))
 		} else if isDistanceData(line) {
-			distances = utils.ExtractNumberValues(line)
+			distances = append(distances, extractNumberOfLine(line))
 		}
 	})
 
