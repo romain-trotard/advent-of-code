@@ -10,20 +10,19 @@ import (
 )
 
 var Cards = []string{
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "T",
-    "J",
-    "Q",
-    "K",
-    "A", 
+	"J",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"T",
+	"Q",
+	"K",
+	"A",
 }
 
 const (
@@ -56,6 +55,10 @@ func (hand *Hand) addCards(cards []string) {
 
 	var Type int
 
+	numberOfJoker := numberOfEachCard["J"]
+	delete(numberOfEachCard, "J")
+
+	// numberOfEachCard 5
 	if len(cards) == len(numberOfEachCard) {
 		Type = HIGH_CARD
 	} else if len(numberOfEachCard) == 1 {
@@ -63,29 +66,64 @@ func (hand *Hand) addCards(cards []string) {
 	} else if len(numberOfEachCard) == 4 {
 		Type = ONE_PAIR
 	} else if len(numberOfEachCard) == 2 {
-		// We need to know if four of a kind / full house
-		for _, numberOfCard := range numberOfEachCard {
-			if numberOfCard == 1 || numberOfCard == 4 {
-				Type = FOUR_OF_A_KIND
-				break
-			} else {
-				Type = FULL_HOUSE
-				break
-			}
-		}
-	} else {
-		twoNumber := 0
-		// We need to know if four of a kind / full house
-		for _, numberOfCard := range numberOfEachCard {
-			if numberOfCard == 2 {
-				twoNumber++
-			}
-		}
+		// Possible to have 3 Jokers or less
 
-		if twoNumber == 2 {
-			Type = TWO_PAIR
+		if numberOfJoker == 3 {
+			// There 2 Cards -> 1/1
+			Type = FOUR_OF_A_KIND
+		} else if numberOfJoker == 2 {
+			// There are 3 cards -> 2/1
+			Type = FOUR_OF_A_KIND
+		} else if numberOfJoker == 1 {
+			// There are 4 cards -> 2/2: FULL_HOUSE - 3/1: FOURT_OF_A_KIND
+			for _, numberOfCard := range numberOfEachCard {
+				if numberOfCard == 1 || numberOfCard == 3 {
+					Type = FOUR_OF_A_KIND
+					break
+				} else {
+					Type = FULL_HOUSE
+					break
+				}
+			}
 		} else {
+			// Same process than before
+			// We need to know if four of a kind / full house
+			for _, numberOfCard := range numberOfEachCard {
+				if numberOfCard == 1 || numberOfCard == 4 {
+					Type = FOUR_OF_A_KIND
+					break
+				} else {
+					Type = FULL_HOUSE
+					break
+				}
+			}
+		}
+	} else if len(numberOfEachCard) == 0 {
+		Type = FIVE_OF_A_KIND
+	} else {
+		// 3 entries in the map -> possible to have 2 Jokers or less
+
+		if numberOfJoker == 2 {
+			// 3 Cards -> 1 of each
 			Type = THREE_OF_A_KIND
+		} else if numberOfJoker == 1 {
+			// 4 Cards -> 2/1/1
+			Type = THREE_OF_A_KIND
+		} else {
+			twoNumber := 0
+			// We need to know if four of a kind / full house
+			for _, numberOfCard := range numberOfEachCard {
+				if numberOfCard == 2 {
+					twoNumber++
+				}
+			}
+
+			// 2/1/2 - 3/1/1
+			if twoNumber == 2 {
+				Type = TWO_PAIR
+			} else {
+				Type = THREE_OF_A_KIND
+			}
 		}
 	}
 
@@ -102,11 +140,11 @@ func (hands ByCard) Len() int {
 	return len(hands)
 }
 func (hands ByCard) Less(i, j int) bool {
-    difference := hands[i].Type - hands[j].Type
+	difference := hands[i].Type - hands[j].Type
 
-    if difference != 0 {
-        return difference <0
-    }
+	if difference != 0 {
+		return difference < 0
+	}
 
 	for index := 0; index < len(hands[i].Cards); index++ {
 		indexIHand := slices.Index(Cards, hands[i].Cards[index])
@@ -119,8 +157,8 @@ func (hands ByCard) Less(i, j int) bool {
 
 	return false
 }
-func (hands ByCard) Swap(i, j int) { 
-    hands[i], hands[j] = hands[j], hands[i] 
+func (hands ByCard) Swap(i, j int) {
+	hands[i], hands[j] = hands[j], hands[i]
 }
 
 func (game *Game) addHand(hand Hand) {
@@ -128,14 +166,14 @@ func (game *Game) addHand(hand Hand) {
 }
 
 func (game Game) getSortedHands() []Hand {
-    sort.Sort(ByCard(game.Hands))
+	sort.Sort(ByCard(game.Hands))
 
-    return game.Hands
+	return game.Hands
 }
 
 func main() {
 	game := Game{}
-    count := 0
+	count := 0
 
 	utils.ForEachFileLine("day7/input.txt", func(line string) {
 		reg, err := regexp.Compile("[0-9A-Z]+")
@@ -168,12 +206,13 @@ func main() {
 		game.addHand(hand)
 	})
 
-    sortedHands := game.getSortedHands()
+	sortedHands := game.getSortedHands()
 
-    for index, hand := range sortedHands {
-        count += (index + 1) * hand.Bid
+	for index, hand := range sortedHands {
+		count += (index + 1) * hand.Bid
 
-    }
+	}
 
-    fmt.Println("Result:", count)
+	fmt.Println("Result:", count)
 }
+
