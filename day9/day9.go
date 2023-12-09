@@ -40,15 +40,14 @@ func (row Row) getPrediction() int {
 
 	for i := len(allRows) - 2; i >= 0; i-- {
 		currentRow := allRows[i]
-		length := len(currentRow)
-		valueToSum := allRows[i+1][len(allRows[i+1]) - 1]
+		valueToSubstract := allRows[i+1][0]
 
-		newValue := currentRow[length-1] + valueToSum
+		newValue := currentRow[0] - valueToSubstract
 
-		allRows[i] = append(allRows[i], newValue)
+		allRows[i] = append([]int{newValue}, allRows[i]...)
 	}
 
-	return allRows[0][len(allRows[0])-1]
+	return allRows[0][0]
 }
 
 type Game struct {
