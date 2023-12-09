@@ -53,7 +53,7 @@ func ConvertToInt(value string) (int, error) {
 }
 
 func ExtractNumberValues(stringValues string) []int {
-	reg, err := regexp.Compile("[0-9]+")
+	reg, err := regexp.Compile("(-)*[0-9]+")
 
 	if err != nil {
 		log.Fatalf("Error: %s", err)
