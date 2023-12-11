@@ -39,7 +39,7 @@ func (universe *Universe) expand() {
 
 		for _, galaxy := range galaxies {
 			if galaxy.x > i {
-				galaxy.x = galaxy.x + 1
+				galaxy.x = galaxy.x + 1000000 - 1
 			}
 		}
 	}
@@ -51,7 +51,7 @@ func (universe *Universe) expand() {
 
 		for _, galaxy := range galaxies {
 			if galaxy.y > i {
-				galaxy.y = galaxy.y + 1
+				galaxy.y = galaxy.y + 1000000 - 1
 			}
 		}
 	}
