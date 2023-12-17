@@ -37,6 +37,12 @@ func (pattern Pattern) isHorizontalSym(index int) bool {
 
 // Easier to reverse the table and use the same methode to get the symetry
 func (pattern Pattern) getColumnToLeft() int {
+	inversedPattern := pattern.getInversedPattern()
+
+	return inversedPattern.getColumnAbove()
+}
+
+func (pattern Pattern) getInversedPattern() Pattern {
 	columnNumber := len(pattern.rows[0])
 	rowNumber := len(pattern.rows)
 
@@ -49,12 +55,10 @@ func (pattern Pattern) getColumnToLeft() int {
 			row = append(row, pattern.rows[j][i])
 		}
 
-        rows = append(rows, row)
+		rows = append(rows, row)
 	}
 
-	inversedPattern := Pattern{rows: rows}
-
-	return inversedPattern.getColumnAbove()
+	return Pattern{rows: rows}
 }
 
 func (pattern Pattern) getColumnAbove() int {
@@ -67,6 +71,72 @@ func (pattern Pattern) getColumnAbove() int {
 	}
 
 	return 0
+}
+
+func invertSymbol(symbol string) string {
+	if symbol == "." {
+		return "#"
+	}
+
+	return "."
+}
+
+func (pattern Pattern) String() string {
+	rows := pattern.rows
+
+	for _, row := range rows {
+		fmt.Println(row)
+	}
+
+	return ""
+}
+
+func checkHorizontalSmudge(pattern Pattern, rowIndex int) bool {
+	j := 1
+	rows := pattern.rows
+	smudgeNumber := 0
+
+	for rowIndex-j >= 0 && rowIndex+j-1 < len(rows) {
+		firstRow := rows[rowIndex-j]
+		secondRow := rows[rowIndex+j-1]
+
+		for i := 0; i < len(firstRow); i++ {
+			if firstRow[i] != secondRow[i] {
+				smudgeNumber++
+
+				if smudgeNumber > 1 {
+					return false
+				}
+			}
+		}
+		j++
+	}
+
+	return smudgeNumber == 1
+}
+
+func (pattern Pattern) findNewPattern() (int, int){
+	rowNumber := len(pattern.rows)
+	columnNumber := len(pattern.rows[0])
+
+	for j := 1; j < rowNumber; j++ {
+		found := checkHorizontalSmudge(pattern, j)
+
+		if found {
+			return j, 0
+		}
+	}
+
+	inversedPattern := pattern.getInversedPattern()
+	for j := 1; j < columnNumber; j++ {
+		found := checkHorizontalSmudge(inversedPattern, j)
+
+		if found {
+			return 0, j
+		}
+	}
+
+	return 0, 0
 }
 
 type Game struct {
@@ -107,9 +177,11 @@ func main() {
 	count := 0
 
 	for _, pattern := range game.patterns {
-		count += pattern.getColumnToLeft()
+		rowNumber, columnNumber := pattern.findNewPattern()
 
-		count += pattern.getColumnAbove() * 100
+		count += columnNumber
+
+		count += rowNumber * 100
 	}
 
 	fmt.Println("Result", count)
