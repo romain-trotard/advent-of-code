@@ -48,19 +48,19 @@ func (game Game) moveBeam(position Position, direction string) {
 		return
 	}
 
-    _, exist := game.energized[position]
+	_, exist := game.energized[position]
 
-    if !exist {
-        game.energized[position] = []string{}
-    }
+	if !exist {
+		game.energized[position] = []string{}
+	}
 
-    energizedDirections := game.energized[position]
+	energizedDirections := game.energized[position]
 
-    if slices.Contains(energizedDirections, direction) {
-        return
-    }
+	if slices.Contains(energizedDirections, direction) {
+		return
+	}
 
-    game.energized[position] = append(game.energized[position], direction)
+	game.energized[position] = append(game.energized[position], direction)
 
 	boardValue := game.board[position.row][position.column]
 
@@ -123,7 +123,7 @@ func (game Game) moveBeam(position Position, direction string) {
 }
 
 func main() {
-	game := Game{ board: [][]string{}, energized: map[Position][]string{} }
+	game := Game{board: [][]string{}, energized: map[Position][]string{}}
 
 	utils.ForEachFileLine("day16/input.txt", func(line string) {
 		row := []string{}
@@ -137,7 +137,55 @@ func main() {
 		game.board = append(game.board, row)
 	})
 
-    game.moveBeam(Position{row: 0, column: 0}, "RIGHT")
+	result := 0
 
-	fmt.Println("Result", len(game.energized))
+	for row := 0; row < game.getNumberOfRows(); row++ {
+		game.energized = map[Position][]string{}
+
+		game.moveBeam(Position{row: row, column: 0}, "RIGHT")
+
+		numberOfTile := len(game.energized)
+
+		if result < numberOfTile {
+			result = numberOfTile
+		}
+	}
+
+	for row := 0; row < game.getNumberOfRows(); row++ {
+		game.energized = map[Position][]string{}
+
+		game.moveBeam(Position{row: row, column: game.getNumberOfColumns() - 1}, "LEFT")
+
+		numberOfTile := len(game.energized)
+
+		if result < numberOfTile {
+			result = numberOfTile
+		}
+	}
+
+	for column := 0; column < game.getNumberOfColumns(); column++ {
+		game.energized = map[Position][]string{}
+
+		game.moveBeam(Position{row: 0, column: column}, "DOWN")
+
+		numberOfTile := len(game.energized)
+
+		if result < numberOfTile {
+			result = numberOfTile
+		}
+	}
+
+	for column := 0; column < game.getNumberOfColumns(); column++ {
+		game.energized = map[Position][]string{}
+
+		game.moveBeam(Position{row: game.getNumberOfRows() - 1, column: column}, "UP")
+
+		numberOfTile := len(game.energized)
+
+		if result < numberOfTile {
+			result = numberOfTile
+		}
+	}
+
+	fmt.Println("Result", result)
 }
