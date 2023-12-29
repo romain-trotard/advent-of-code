@@ -132,6 +132,7 @@ func main() {
 	heap.Init(&pq)
 
 	heap.Push(&pq, &Work{state: State{direction: "RIGHT", numberOfStepInDirection: 0, position: Position{row: 0, column: 0}}, heatLoss: 0})
+	heap.Push(&pq, &Work{state: State{direction: "DOWN", numberOfStepInDirection: 0, position: Position{row: 0, column: 0}}, heatLoss: 0})
 
 	goalPosition := Position{row: game.getNumberOfRows() - 1, column: game.getNumberOfColumns() - 1}
 	directions := []string{"UP", "DOWN", "RIGHT", "LEFT"}
@@ -146,22 +147,27 @@ func main() {
 	for len(pq) > 0 {
 		work := heap.Pop(&pq).(*Work)
 
-		if work.state.position == goalPosition {
+		if work.state.position == goalPosition && work.state.numberOfStepInDirection >= 4 {
 			fmt.Println("Result", work.heatLoss)
 		}
 
 		for _, direction := range directions {
 			workDirection := work.state.direction
+            workNumberOfStepInDirection := work.state.numberOfStepInDirection
 
             if inverseDirectionByDirection[workDirection] == direction {
                 continue
             }
 
-			nextState := work.state.next(direction)
-
-			if nextState.numberOfStepInDirection > 3 {
+			if workNumberOfStepInDirection > 9 && workDirection == direction {
 				continue
 			}
+            if workNumberOfStepInDirection < 4 && direction != workDirection {
+                continue
+            }
+
+			nextState := work.state.next(direction)
+
 
 			if !game.isPositionValid(nextState.position) {
 				continue
