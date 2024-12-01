@@ -35,17 +35,19 @@ async function main() {
     leftColumn.sort();
     rightColumn.sort();
 
+    const occurrencesByNumber = new Map<number, number>();
+
+    for (const value of rightColumn) {
+        const currentValue = occurrencesByNumber.get(value) ?? 0;
+
+        occurrencesByNumber.set(value, currentValue + 1);
+    }
+
 
     let result = 0;
 
-    for (let i = 0; i < leftColumn.length; i++) { 
-        const left = leftColumn[i];
-        const right = rightColumn[i];
-
-        assertDefined(left);
-        assertDefined(right);
-
-        result += Math.abs(left - right);
+    for (const left of leftColumn) {
+        result += left * (occurrencesByNumber.get(left) ?? 0);
     }
 
     console.log('The result is', result);
