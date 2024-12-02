@@ -13,7 +13,20 @@ function assertDefined<T>(value: T | undefined): asserts value is T {
     }
 }
 
-function validate(report: Array<number>): boolean {
+function retryValidate(report: Array<number>, currentIndex: number) {
+    for (let delta = 0; delta <= Math.min(2, currentIndex); delta++) {
+        const reportToTest = report.filter((_, index) => index !== currentIndex - delta);
+        const result = validate(reportToTest, true);
+
+        if (result) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function validate(report: Array<number>, retry = false): boolean {
     let sort: Sort | undefined = undefined;
 
     for (let i = 1; i < report.length; i++) {
@@ -27,7 +40,11 @@ function validate(report: Array<number>): boolean {
         const absDifference = Math.abs(difference);
 
         if (absDifference < MIN_LEVEL_DIFFERENCE || absDifference > MAX_LEVEL_DIFFERENCE) {
-            return false;
+            if (retry) {
+                return false
+            }
+
+            return retryValidate(report, i);
         }
 
         const currentSort = difference > 0 ? 'desc' : 'asc'
@@ -37,7 +54,11 @@ function validate(report: Array<number>): boolean {
         }
 
         if (sort !== currentSort) {
-            return false
+            if (retry) {
+                return false;
+            }
+
+            return retryValidate(report, i);
         }
     }
 
@@ -51,7 +72,7 @@ async function main() {
 
     const reports = lines.map(extractNumbers);
 
-    const result = reports.filter(validate).length;
+    const result = reports.filter(value => validate(value)).length;
 
     console.log('The result is', result);
 }
