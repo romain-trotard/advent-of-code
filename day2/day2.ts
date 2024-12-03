@@ -1,3 +1,6 @@
+import { assertDefined } from "../utils/asserts";
+import { getFileLines } from "../utils/fileUtils";
+
 function extractNumbers(value: string): Array<number> {
     return value.match(/\d+/g)?.map(Number) || []
 }
@@ -6,12 +9,6 @@ type Sort = 'desc' | 'asc';
 
 const MIN_LEVEL_DIFFERENCE = 1;
 const MAX_LEVEL_DIFFERENCE = 3;
-
-function assertDefined<T>(value: T | undefined): asserts value is T {
-    if (value === undefined) {
-        throw new Error('Should be defined')
-    }
-}
 
 function retryValidate(report: Array<number>, currentIndex: number) {
     for (let delta = 0; delta <= Math.min(2, currentIndex); delta++) {
@@ -66,9 +63,7 @@ function validate(report: Array<number>, retry = false): boolean {
 }
 
 async function main() {
-    const input = Bun.file(`${__dirname}/input.txt`);
-    const fileContent = await input.text();
-    const lines = fileContent.split('\n').filter(line => line.trim() !== '');
+    const lines = await getFileLines(`${__dirname}/input.txt`)
 
     const reports = lines.map(extractNumbers);
 

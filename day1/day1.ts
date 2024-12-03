@@ -1,24 +1,12 @@
-function assertTwoElementInArray<T>(values: Array<T>): asserts values is [T, T] {
-    if (values.length !== 2) {
-        throw new Error('Should have 2 elements')
-    }
-}
-
-function assertDefined<T>(value: T | undefined): asserts value is T {
-    if (value === undefined) {
-        throw new Error('Should be defined')
-    }
-}
+import { assertTwoElementInArray } from "../utils/asserts";
+import { getFileLines } from "../utils/fileUtils";
 
 function extractNumbers(value: string): Array<number> {
     return value.match(/\d+/g)?.map(Number) || []
 }
 
 async function main() {
-    const input = Bun.file(`${__dirname}/input.txt`);
-    const fileContent = await input.text();
-    const lines = fileContent.split('\n').filter(line => line.trim() !== '');
-
+    const lines = await getFileLines(`${__dirname}/input.txt`)
 
     const leftColumn: Array<number> = [];
     const rightColumn: Array<number> = [];

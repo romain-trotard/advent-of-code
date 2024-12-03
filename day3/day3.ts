@@ -1,3 +1,6 @@
+import { assertDefined } from "../utils/asserts";
+import { getFileLines } from "../utils/fileUtils";
+
 type Multiplication = {
     leftOperand: number;
     rightOperand: number;
@@ -5,12 +8,6 @@ type Multiplication = {
 
 const ENABLE_MULTIPLICATION = 'do()';
 const DISABLE_MULTIPLICATION = 'don\'t()';
-
-function assertDefined<T>(value: T | undefined): asserts value is T {
-    if (value === undefined) {
-        throw new Error('Should be defined')
-    }
-}
 
 let isMultiplicationEnabled = true;
 
@@ -54,10 +51,7 @@ function extractMultiplication(value: string): Array<Multiplication> {
 }
 
 async function main() {
-    const input = Bun.file(`${__dirname}/input.txt`);
-    const fileContent = await input.text();
-    const lines = fileContent.split('\n').filter(line => line.trim() !== '');
-
+    const lines = await getFileLines(`${__dirname}/input.txt`)
 
     const multiplications = lines.flatMap(extractMultiplication);
 
