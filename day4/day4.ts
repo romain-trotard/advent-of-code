@@ -37,7 +37,7 @@ class Game {
         return firstLine.length;
     }
 
-    private getTopPosition = (currentPosition: Position) => {
+    private getTopPosition(currentPosition: Position) {
         if (currentPosition.y === 1) {
             return null;
         }
@@ -48,7 +48,7 @@ class Game {
         }
     }
 
-    private getBottomPosition = (currentPosition: Position) => {
+    private getBottomPosition(currentPosition: Position) {
         if (currentPosition.y === this.getRowNumber()) {
             return null;
         }
@@ -59,7 +59,7 @@ class Game {
         }
     }
 
-    private getRightPosition = (currentPosition: Position) => {
+    private getRightPosition(currentPosition: Position) {
         if (currentPosition.x === this.getColumnNumber()) {
             return null;
         }
@@ -70,7 +70,7 @@ class Game {
         }
     }
 
-    private getLeftPosition = (currentPosition: Position) => {
+    private getLeftPosition(currentPosition: Position) {
         if (currentPosition.x === 1) {
             return null;
         }
@@ -81,7 +81,7 @@ class Game {
         }
     }
 
-    private getTopLeftPosition = (currentPosition: Position) => {
+    private getTopLeftPosition(currentPosition: Position) {
         const topPosition = this.getTopPosition(currentPosition);
         const leftPosition = this.getLeftPosition(currentPosition);
 
@@ -95,7 +95,7 @@ class Game {
         }
     }
 
-    private getTopRightPosition = (currentPosition: Position) => {
+    private getTopRightPosition(currentPosition: Position) {
         const topPosition = this.getTopPosition(currentPosition);
         const rightPosition = this.getRightPosition(currentPosition);
 
@@ -109,7 +109,7 @@ class Game {
         }
     }
 
-    private getBottomRightPosition = (currentPosition: Position) => {
+    private getBottomRightPosition(currentPosition: Position) {
         const bottomPosition = this.getBottomPosition(currentPosition);
         const rightPosition = this.getRightPosition(currentPosition);
 
@@ -123,7 +123,7 @@ class Game {
         }
     }
 
-    private getBottomLeftPosition = (currentPosition: Position) => {
+    private getBottomLeftPosition(currentPosition: Position) {
         const bottomPosition = this.getBottomPosition(currentPosition);
         const leftPosition = this.getLeftPosition(currentPosition);
 
@@ -161,16 +161,6 @@ class Game {
     }
 
     check() {
-        const allMovements = [
-            this.getBottomRightPosition,
-            this.getBottomLeftPosition,
-            this.getTopLeftPosition,
-            this.getTopRightPosition,
-            this.getLeftPosition,
-            this.getRightPosition,
-            this.getTopPosition,
-            this.getBottomPosition
-        ]
         let matchingCount = 0;
 
         for (let j = 0; j < this.getRowNumber(); j++) {
@@ -181,20 +171,36 @@ class Game {
                 const letter = line[i] as string | undefined; // Dafuq it does not understand....
                 assertDefined(letter);
 
-                if (letter !== 'X') {
+                if (letter !== 'A') {
                     continue;
                 }
 
-                for (const move of allMovements) {
-                    if (this.checkDirection({
-                        x: i + 1,
-                        y: j + 1,
-                    }, move)) {
-                        matchingCount++;
-                    }
+                const currentPosition = {
+                    x: i + 1,
+                    y: j + 1,
+                }
+
+                const topLeft = this.getTopLeftPosition(currentPosition);
+                const topRight = this.getTopRightPosition(currentPosition);
+                const bottomLeft = this.getBottomLeftPosition(currentPosition);
+                const bottomRight = this.getBottomRightPosition(currentPosition);
+
+                if (topLeft === null || topRight === null || bottomLeft === null || bottomRight === null) {
+                    continue;
+                }
+
+                const topLeftValue = this.getBoardValue(topLeft);
+                const topRightValue = this.getBoardValue(topRight);
+                const bottomLeftValue = this.getBoardValue(bottomLeft);
+                const bottomRightValue = this.getBoardValue(bottomRight);
+
+                if (
+                    ((topLeftValue === 'M' && bottomRightValue === 'S') || (topLeftValue === 'S' && bottomRightValue === 'M')) &&
+                    ((topRightValue === 'M' && bottomLeftValue === 'S') || (topRightValue === 'S' && bottomLeftValue === 'M'))
+                ) {
+                    matchingCount++
                 }
             }
-
         }
 
         return matchingCount;
