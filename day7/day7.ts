@@ -24,6 +24,7 @@ type BinaryNode = {
     value: number
     add: BinaryNode | null;
     multiply: BinaryNode | null;
+    concatenation: BinaryNode | null;
 }
 
 class Tree {
@@ -31,40 +32,49 @@ class Tree {
 
     add(value: number) {
         if (this.#node === null) {
-            this.#node = { value, add: null, multiply: null };
+            this.#node = { value, add: null, multiply: null, concatenation: null };
             return;
         }
 
         // Find deep node that does not have add and multiply
         const deepAdd = (node: BinaryNode) => {
-            if (node.add === null || node.multiply === null) {
+            if (node.add === null || node.multiply === null || node.concatenation === null) {
                 node.add = {
                     value: node.value + value,
                     add: null,
                     multiply: null,
+                    concatenation: null,
                 }
                 node.multiply = {
                     value: node.value * value,
                     add: null,
                     multiply: null,
+                    concatenation: null,
+                }
+                node.concatenation = {
+                    value: Number.parseInt(node.value + `${value}`, 10),
+                    add: null,
+                    multiply: null,
+                    concatenation: null,
                 }
                 return;
             }
 
             deepAdd(node.add);
             deepAdd(node.multiply);
+            deepAdd(node.concatenation);
         }
 
         deepAdd(this.#node);
     }
 
     find(searchedValue: number): boolean {
-        const search = ({ value, add, multiply }: BinaryNode): boolean => {
-            if (add === null || multiply === null) {
+        const search = ({ value, add, multiply, concatenation }: BinaryNode): boolean => {
+            if (add === null || multiply === null || concatenation === null) {
                 return value === searchedValue;
             }
 
-            return search(add) || search(multiply);
+            return search(add) || search(multiply) || search(concatenation);
         }
 
         assertDefined(this.#node);
