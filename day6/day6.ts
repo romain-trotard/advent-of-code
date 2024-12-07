@@ -108,7 +108,57 @@ class Game {
         const previousLine = this.#board[this.#currentUserPosition.y - 1];
         assertDefined(previousLine)
 
-        previousLine[this.#currentUserPosition.x - 1] = PASSED_BY;
+        const currentValue = previousLine[this.#currentUserPosition.x - 1];
+        assertDefined(currentValue);
+
+        let newValue: string = currentValue;
+
+        if (currentValue === '.') {
+            switch (this.#currentDirection) {
+                case "up":
+                    newValue = '|'
+                    break;
+                case "down":
+                    newValue = '|'
+                    break;
+                case "right":
+                    newValue = '-'
+                    break;
+                case "left":
+                    newValue = '-'
+                    break;
+            }
+        } else {
+            switch (this.#currentDirection) {
+                case "up": {
+                    if (currentValue === '-') {
+                        newValue = '+';
+                    }
+                    break;
+                }
+                case "down": {
+                    if (currentValue === '-') {
+                        newValue = '+';
+                    }
+                    break;
+                }
+                case "right": {
+                    if (currentValue === '|') {
+                        newValue = '+';
+                    }
+                    break;
+                }
+                case "left": {
+                    if (currentValue === '|') {
+                        newValue = '+';
+                    }
+                    break;
+                }
+            }
+        }
+
+        assertDefined(newValue);
+        previousLine[this.#currentUserPosition.x - 1] = newValue;
     }
 
     // As long as he can go in the current direction let's do this
@@ -117,6 +167,8 @@ class Game {
     * @return false when the user reaches the side
     */
     #moveUser(): boolean {
+        this.#markCurrentCaseAsPassedBy();
+
         const nextUserPosition = this.#getNextUserPositionWhenGoingForward();
         const { x, y } = nextUserPosition;
 
@@ -125,7 +177,7 @@ class Game {
             || y === 0 || y > this.#rowNumber()
         ) {
             // Mark the current case as passed by
-            this.#markCurrentCaseAsPassedBy();
+            // this.#markCurrentCaseAsPassedBy();
             return false
         }
 
@@ -140,7 +192,7 @@ class Game {
             return true;
         }
 
-        this.#markCurrentCaseAsPassedBy();
+        // this.#markCurrentCaseAsPassedBy();
 
         this.#currentUserPosition = nextUserPosition;
 
@@ -156,6 +208,10 @@ class Game {
 
     count() {
         let result = 0;
+
+        for (const line of this.#board) {
+            console.log(line);
+        }
 
         for (let y = 0; y < this.#board.length; y++) {
             const columnNumber = this.#board[0]?.length || 0;
