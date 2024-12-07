@@ -6,8 +6,6 @@ type Updates = number[][];
 async function main() {
     const lines = await getFileLines(`${__dirname}/input.txt`)
 
-    // let convertingMode: 'pageOrdering' | 'updates' = 'pageOrdering'
-
     const pageOrdering = new Map<number, Array<number>>();
     const updates: Updates = [];
 
@@ -31,8 +29,7 @@ async function main() {
         }
     }
 
-
-    let result = 0;
+    const invalidUpdates: Updates = [];
 
     for (const update of updates) {
         const processedNumbers: Array<number> = [];
@@ -49,15 +46,36 @@ async function main() {
             const notValid = previousNumbers.some(pn => processedNumbers.includes(pn))
 
             if (notValid) {
+                invalidUpdates.push(update);
                 break;
             }
 
             processedNumbers.push(number);
         }
+    }
 
-        if (processedNumbers.length === update.length) {
-            result += processedNumbers[Math.floor(processedNumbers.length / 2)] ?? 0;
-        }
+
+    let result = 0;
+
+    for (const update of invalidUpdates) {
+        const orderedInvalidUpdate = update.toSorted((first, second) => {
+
+            const firstAfter = pageOrdering.get(first)
+
+            if (firstAfter?.includes(second)) {
+                return -1
+            }
+
+            const secondAfter = pageOrdering.get(first)
+
+            if (secondAfter?.includes(second)) {
+                return 1
+            }
+
+            return 0;
+        });
+
+        result += orderedInvalidUpdate[Math.floor(orderedInvalidUpdate.length / 2)] ?? 0;
     }
 
     console.log('The result is', result);
