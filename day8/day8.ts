@@ -77,21 +77,23 @@ class Game {
     getAntinodesPositions(): Array<Position> {
         const positions: Array<Position> = [];
 
-        const addPositionIfValid = (position: Position) => {
+        const addPositionIfValid = (position: Position): boolean => {
             if (!this.#isValidPosition(position)) {
-                return;
+                return false;
             }
 
             const isPresent = positions.some(value => value.x === position.x && value.y === position.y);
 
             if (isPresent) {
-                return;
+                return true;
             }
 
             positions.push(position);
+
+            return true
         }
 
-        for (const [value, antennasPositions] of this.#antennas.entries()) {
+        for (const [_value, antennasPositions] of this.#antennas.entries()) {
             if (antennasPositions.length <= 1) {
                 continue;
             }
@@ -111,12 +113,38 @@ class Game {
                     const xDifference = rightOutboundPosition.x - leftOutboundPosition.x;
                     const yDifference = rightOutboundPosition.y - leftOutboundPosition.y;
 
+                    let isPositionValid = false;
+                    let leftWorking = leftOutboundPosition;
 
-                    const firstNewPosition: Position = { x: leftOutboundPosition.x - xDifference, y: leftOutboundPosition.y - yDifference };
-                    const secondNewPosition: Position = { x: rightOutboundPosition.x + xDifference, y: rightOutboundPosition.y + yDifference }
+                    let counter = 0;
 
-                    addPositionIfValid(firstNewPosition);
-                    addPositionIfValid(secondNewPosition);
+                    do {
+                        const firstNewPosition: Position = { x: leftWorking.x - xDifference, y: leftWorking.y - yDifference };
+                        isPositionValid = addPositionIfValid(firstNewPosition);
+                        leftWorking = firstNewPosition;
+                        counter++;
+                    } while (isPositionValid);
+
+                    // If an item has been added we add original points to positions
+                    if (counter > 0) {
+                        addPositionIfValid(leftOutboundPosition);
+                        addPositionIfValid(rightOutboundPosition);
+                    }
+
+                    let rigthWorking = counter >= 1 ? leftOutboundPosition : rightOutboundPosition;
+                    counter = 0;
+
+                    do {
+                        const secondNewPosition: Position = { x: rigthWorking.x + xDifference, y: rigthWorking.y + yDifference }
+                        isPositionValid = addPositionIfValid(secondNewPosition);
+                        rigthWorking = secondNewPosition;
+                        counter++;
+                    } while (isPositionValid);
+
+                    if (counter > 0) {
+                        addPositionIfValid(leftOutboundPosition);
+                        addPositionIfValid(rightOutboundPosition);
+                    }
                 }
             }
         }
@@ -134,12 +162,33 @@ class Game {
 
         return line.length;
     }
+
+    print() {
+        const positions = this.getAntinodesPositions()
+        for (let i = 0; i < this.#columnNumber(); i++) {
+            let line = '';
+            for (let j = 0; j < this.#rowNumber(); j++) {
+
+                const isPresent = positions.some(value => value.x === i && value.y === j);
+
+                if (isPresent) {
+                    line += '#'
+                } else {
+                    line += '.';
+                }
+            }
+
+            console.log(line);
+        }
+    }
 }
 
 async function main() {
     const lines = await getFileLines(`${__dirname}/input.txt`)
 
     const game = new Game(lines);
+
+    game.print()
 
     const result = game.getAntinodesPositions().length;
 
@@ -148,3 +197,7 @@ async function main() {
 
 main();
 
+
+/*
+    * 1000 too low
+*/
