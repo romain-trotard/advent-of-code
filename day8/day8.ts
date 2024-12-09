@@ -197,7 +197,3 @@ async function main() {
 
 main();
 
-
-/*
-    * 1000 too low
-*/
