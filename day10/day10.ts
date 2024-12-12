@@ -9,7 +9,7 @@ type Position = {
 
 type HeadWithTrails = {
     position: Position;
-    trails: Set<string>;
+    trails: Array<string>;
 }
 
 function loopThroughBoard(board: Board, currentPosition: Position, headWithTrails: HeadWithTrails, numberToFind: number) {
@@ -42,7 +42,7 @@ function loopThroughBoard(board: Board, currentPosition: Position, headWithTrail
             if (value === numberToFind) {
                 if (numberToFind === 9) {
                     // The end
-                    headWithTrails.trails.add(`${x}-${y}`);
+                    headWithTrails.trails.push(`${x}-${y}`);
                 } else {
                     loopThroughBoard(board, { x, y }, headWithTrails, numberToFind + 1);
                 }
@@ -81,7 +81,7 @@ async function main() {
                         x,
                         y,
                     },
-                    trails: new Set()
+                    trails: [],
                 });
             }
         }
@@ -94,7 +94,7 @@ async function main() {
     let result = 0;
 
     for (const pos of startingPositions) {
-        result += pos.trails.size;
+        result += pos.trails.length;
     }
 
     console.log('The result is', result);
