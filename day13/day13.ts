@@ -18,6 +18,7 @@ const prizeRegex = /Prize: X=(\d+), Y=(\d+)/;
 
 const A_BUTTON_PRESS_NUMBER = 3;
 const B_BUTTON_PRESS_NUMBER = 1;
+const EXTRA_PRIZE = 10000000000000;
 
 function extractPosition(line: string, regexp: RegExp): Position {
     const match = regexp.exec(line);
@@ -33,10 +34,15 @@ function extractPosition(line: string, regexp: RegExp): Position {
 }
 
 function extractCalculation(lines: [string, string, string]): Calculation {
+    const prizePosition = extractPosition(lines[2], prizeRegex);
+
     return {
         aButton: extractPosition(lines[0], buttonARegex),
         bButton: extractPosition(lines[1], buttonBRegex),
-        prize: extractPosition(lines[2], prizeRegex),
+        prize: {
+            x: prizePosition.x + EXTRA_PRIZE,
+            y: prizePosition.y + EXTRA_PRIZE,
+        },
     };
 }
 
