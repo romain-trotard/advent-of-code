@@ -1,31 +1,36 @@
 import { assertDefined } from "../utils/asserts";
 import { getFileLines } from "../utils/fileUtils";
 
+const wantedJoltageNumber = 12;
+// 987654321111111
+// 9876      54321111111
+// 876      54321111111
+//
+
+
 function findLargestJoltage(value: string) {
-    const numbers = value.split('');
-    // Need to find the first greatest number
-    // Then I remove it from the array with the previous numbers too
-    // And, find again the second greatest number
-    const sortedNumbers = numbers.toSorted();
-    const firstGreatestNumber = sortedNumbers.at(-1);
+    // We need to ensure that the number is accessible for the current joltage number
+    // so we gonna slice the number that are not accessible fr this one
+    let numbers = value.split('');
+    const values: string[] = [];
 
-    assertDefined(firstGreatestNumber);
+    for (let currentVoltageIndex = wantedJoltageNumber; currentVoltageIndex > 0; currentVoltageIndex--) {
+        // Do not forget the + 1 otherwises the last number will never be taken into account
+        const accessibleNumbers = numbers.slice(0, numbers.length - currentVoltageIndex + 1);
 
-    const firstGreatestNumberIndex = numbers.findIndex(value => value === firstGreatestNumber);
+        const greatestNumber = accessibleNumbers.toSorted().at(-1);
 
-    if (firstGreatestNumberIndex === numbers.length - 1) {
-        // It's the last number so we can find another biggest number but it will be our secondGreatestNumber
-        const realFirstNumber = numbers.filter(v => v !== firstGreatestNumber).toSorted().at(-1);
+        assertDefined(greatestNumber);
 
-        return realFirstNumber + firstGreatestNumber;
+        values.push(greatestNumber);
+
+        const greatestNumberIndex = numbers.findIndex(value => value === greatestNumber);
+
+        // Remove the first number matching firstGreatestNumber
+        numbers = numbers.slice(greatestNumberIndex + 1);
     }
 
-
-    // Remove the first number matching firstGreatestNumber
-    const potentialNumbers = numbers.slice(firstGreatestNumberIndex + 1);
-    const secondGreatestNumber = potentialNumbers.toSorted().at(-1);
-
-    return firstGreatestNumber + secondGreatestNumber;
+    return values.join('');
 }
 
 async function main() {
@@ -37,5 +42,4 @@ async function main() {
 }
 
 main();
-
 
