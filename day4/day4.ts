@@ -2,17 +2,16 @@ import { assertDefined } from "../utils/asserts";
 import { getFileLines } from "../utils/fileUtils";
 
 const ROLL = '@';
+const REMOVED = 'x';
 
-async function main() {
-    const lines = await getFileLines(`${__dirname}/input.txt`)
-
-    const firstRow = lines.at(0);
+function removeRoll({ table }: { table: string[][] }) {
+    const firstRow = table.at(0);
     assertDefined(firstRow);
 
     const width = firstRow.length;
-    const height = lines.length;
+    const height = table.length;
 
-    const table = lines.map(line => line.split(''));
+
     const processedTable: typeof table = table.map(() => []);
 
     for (let j = 0; j < height; j++) {
@@ -55,16 +54,36 @@ async function main() {
             const processedRow = processedTable[j];
             assertDefined(processedRow);
             if (count >= 4) {
-                processedRow[i] = 'x';
-            } else {
                 processedRow[i] = '@';
+            } else {
+                processedRow[i] = REMOVED;
             }
         }
     }
 
-    const result = processedTable.map(line => line.filter(v => v === ROLL).length).reduce((a, b) => a + b);
+    const removedRollCount = processedTable.map(line => line.filter(v => v === REMOVED).length).reduce((a, b) => a + b);
 
-    console.log('The result is', result);
+    const endTable = processedTable.map(line => line.join('').replaceAll(REMOVED, '.').split(''));
+
+    return { removedRollCount, table: endTable };
+}
+
+async function main() {
+    const lines = await getFileLines(`${__dirname}/input.txt`)
+
+    let table = lines.map(line => line.split(''));
+
+    let result = 0;
+    let removedRollCount = 0;
+
+    do {
+        let { removedRollCount: toto, table: newTable } = removeRoll({ table });
+        removedRollCount = toto;
+        table = newTable;
+        result += removedRollCount;
+    } while(removedRollCount > 0)
+
+        console.log('The result is', result);
 }
 
 main();
