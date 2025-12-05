@@ -5,3 +5,9 @@ export async function getFileLines(filePath: string) {
     return fileContent.split('\n').filter(line => line.trim() !== '');
 }
 
+export async function getUnfilteredFileLines(filePath: string) {
+    const input = Bun.file(filePath);
+    const fileContent = await input.text();
+
+    return fileContent.split('\n');
+}
