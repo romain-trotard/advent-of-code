@@ -4,6 +4,7 @@ import { getUnfilteredFileLines } from "../utils/fileUtils";
 type FreshIngredient = {
     start: number;
     end: number;
+    unmergeable: boolean;
 }
 
 type Problem = {
@@ -24,12 +25,15 @@ function getProblem(lines: string[]): Problem {
 
         switch(mode) {
             case 'FRESH_INGREDIENT': {
-                const [start, end] = line.split('-');
+                const [stringStart, stringEnd] = line.split('-');
 
-                assertDefined(start);
-                assertDefined(end);
+                assertDefined(stringStart);
+                assertDefined(stringEnd);
 
-                problem.freshIngredients.push({ start: Number.parseInt(start, 10), end: Number.parseInt(end, 10) })
+                const start = Number.parseInt(stringStart, 10);
+                const end = Number.parseInt(stringEnd, 10);
+
+                problem.freshIngredients.push({ start, end, unmergeable: false })
                 break;
             }
             case 'INGREDIENT': {
@@ -41,25 +45,89 @@ function getProblem(lines: string[]): Problem {
     return problem;
 }
 
-function isIngredientFresh({ problem, ingredient }: { problem: Problem; ingredient: number }) {
-    for (const freshIngredient of problem.freshIngredients) {
-        if (freshIngredient.start <= ingredient && freshIngredient.end >= ingredient) {
-            return true;
-        }
-    }
-
-    return false;
+function isIncluded(a: FreshIngredient, b: FreshIngredient) {
+    return (a.start <= b.start && a.end >= b.start) || (a.start <= b.end && a.end >= b.end);
 }
 
+function process(ranges: FreshIngredient[]) {
+    // Let's work with the first mergeable ranges
+    const working = ranges.find(i => !i.unmergeable);
+    assertDefined(working);
+
+    // We do a list of items to process, without the current working ranges
+    const filtered = ranges.filter((v) => v !== working);
+
+    const result: FreshIngredient[] = [];
+
+    let unmergeable = true;
+
+    for (const range of filtered) {
+        // If the range is not mergeable we know that it will be impossible to merge it with another one
+        // And if the range is not included with the working one, we are done with it
+        // It seems I cannot check unmergeable here, I don't really know why
+        if (!isIncluded(working, range)) {
+            result.push(range);
+
+            continue;
+        }
+
+        // 2 - 5
+        // 4 - 4
+        if (working.start <= range.start && working.end >= range.end) {
+            unmergeable = false;
+            continue;
+        }
+
+        // Merge with working
+        if (working.start <= range.start && working.end >= range.start) {
+            if (working.end < range.end) {
+                working.end = range.end;
+            }
+            unmergeable = false;
+
+            continue;
+        }
+
+        if (working.start <= range.end && working.end >= range.end) {
+            if (working.start > range.start) {
+                working.start = range.start;
+            }
+            unmergeable = false;
+
+            continue;
+        }
+
+        result.push(range);
+    }
+
+    working.unmergeable = unmergeable;
+    result.push(working);
+
+    return result;
+}
+
+// I need to merge the ranges that are included in each others
+// I think I need to have a notion of unmergeable stuff to be sure not to do an unstopable loop
+// Once all ranges are unmergeable I stop there
 async function main() {
     const lines = await getUnfilteredFileLines(`${__dirname}/input.txt`)
     const problem = getProblem(lines);
 
-    const result = problem.ingredients.filter(ingredient => isIngredientFresh({ ingredient, problem })).length;
+    let ranges = problem.freshIngredients;
+
+    do {
+        ranges = process(ranges);
+        // Filter ranges that are mergeable
+        // If there is none it's done
+    } while(ranges.filter(r => !r.unmergeable).length > 0)
+
+    const result = ranges.reduce((acc, r) => {
+        acc += r.end - r.start + 1;
+        return acc;
+    }, 0);
 
     console.log('The result is', result);
 }
 
 main();
-
 
