@@ -8,80 +8,67 @@ type Position = {
   //            v
 };
 
-function findStartingPoint(board: Element[][]) {
-  // Find the starting position
-  for (let y = 0; y < board.length; y++) {
-    const row = board[y];
-    assertDefined(row);
+class Problem {
+  #board: Element[][];
+  #currentPositions: Position[] = [];
+  #currentRow: number = 1;
+  #splitterHitted: Position[] = [];
 
-    for (let x = 0; x < row.length; x++) {
-      const value = row[x];
-      // TODO rtr why I can't use assertDefined? If I use it, I get any on value...
-      if (value === undefined) {
-        throw new Error("Value should be defined");
-      }
+  constructor(board: Element[][]) {
+    this.#board = board;
 
-      if (value === "S") {
-        return { x, y };
-      }
-    }
-  }
-  throw new Error("Starting point not found");
-}
-
-function getBoardValue({ board, position }: { board: Element[][]; position: Position }): Element {
-  const row = board[position.y];
-  assertDefined(row);
-
-  const value = row[position.x];
-  assertDefined(value);
-
-  return value;
-}
-
-function getWidth({ board }: { board: Element[][] }) {
-  const firstRow = board[0];
-  assertDefined(firstRow);
-
-  return firstRow.length;
-}
-
-function process({
-  splitterHitted,
-  board,
-  currentPosition,
-}: {
-  splitterHitted: Position[];
-  board: Element[][];
-  currentPosition: Position;
-}) {
-  const potentialNextPosition = {
-    ...currentPosition,
-    y: currentPosition.y + 1,
-  };
-
-  if (potentialNextPosition.y >= board.length) {
-    return;
+    this.#currentPositions.push(this.#findStartingPoint());
   }
 
-  const value = getBoardValue({ board, position: potentialNextPosition });
+  #getWidth() {
+    const firstRow = this.#board[0];
+    assertDefined(firstRow);
 
-  if (value === ".") {
-    return process({ splitterHitted, board, currentPosition: potentialNextPosition });
+    return firstRow.length;
   }
 
-  splitterHitted.push(potentialNextPosition);
-
-  const alreadyPresent = (position: Position) => {
-    for (const p of splitterHitted) {
+  #isAlreadyPresent({ position, positions }: { position: Position; positions: Position[] }) {
+    for (const p of positions) {
       if (p.x === position.x && p.y === position.y) {
         return true;
       }
     }
     return false;
-  };
+  }
 
-  const findLeftPosition = (position: Position) => {
+  #getValue(position: Position): Element {
+    const row = this.#board[position.y];
+    assertDefined(row);
+
+    const value = row[position.x];
+    assertDefined(value);
+
+    return value;
+  }
+
+  #findRightPosition(position: Position): null | Position {
+    const rightPosition = {
+      ...position,
+      x: position.x + 1,
+    };
+
+    if (rightPosition.x >= this.#getWidth()) {
+      return null;
+    }
+
+    if (this.#getValue(rightPosition) === "^") {
+      if (this.#isAlreadyPresent({ position: rightPosition, positions: this.#splitterHitted })) {
+        return null;
+      }
+
+      this.#splitterHitted.push(rightPosition);
+      return this.#findRightPosition(rightPosition);
+    }
+
+    return rightPosition;
+  }
+
+  #findLeftPosition(position: Position): null | Position {
     const leftPosition = {
       ...position,
       x: position.x - 1,
@@ -91,79 +78,113 @@ function process({
       return null;
     }
 
-    if (getBoardValue({ board, position: leftPosition }) === "^") {
-      if (alreadyPresent(leftPosition)) {
+    if (this.#getValue(leftPosition) === "^") {
+      if (this.#isAlreadyPresent({ position: leftPosition, positions: this.#splitterHitted })) {
         return null;
       }
 
-      splitterHitted.push(leftPosition);
-      return findLeftPosition(leftPosition);
+      this.#splitterHitted.push(leftPosition);
+      return this.#findLeftPosition(leftPosition);
     }
 
     return leftPosition;
-  };
-
-  const leftPosition = findLeftPosition(potentialNextPosition);
-
-  if (leftPosition !== null) {
-    process({
-      splitterHitted,
-      board,
-      currentPosition: leftPosition,
-    });
   }
 
-  const findRightPosition = (position: Position) => {
-    const rightPosition = {
-      ...position,
-      x: position.x + 1,
-    };
-
-    if (rightPosition.x >= getWidth({ board })) {
-      return null;
+  process() {
+    for (let i = 1; i < this.#board.length; i++) {
+      this.#processRow();
     }
 
-    if (getBoardValue({ board, position: rightPosition }) === "^") {
-      if (alreadyPresent(rightPosition)) {
-        return null;
+    return this.#deduplicateObjects(this.#splitterHitted).length;
+  }
+
+  #processRow() {
+    const tempCurrentPosition: Position[] = [];
+
+    for (const currentPosition of this.#currentPositions) {
+      const potentialNextPosition = {
+        ...currentPosition,
+        y: currentPosition.y + 1,
+      };
+
+      const value = this.#getValue(potentialNextPosition);
+
+      // We can go on this position, it's over
+      if (value === ".") {
+        if (
+          !this.#isAlreadyPresent({
+            positions: tempCurrentPosition,
+            position: potentialNextPosition,
+          })
+        ) {
+          tempCurrentPosition.push(potentialNextPosition);
+        }
+        continue;
       }
 
-      splitterHitted.push(rightPosition);
-      return findRightPosition(rightPosition);
+      // If the splitter is already here we are done
+      if (
+        this.#isAlreadyPresent({ positions: this.#splitterHitted, position: potentialNextPosition })
+      ) {
+        continue;
+      }
+
+      // Otherwise there is something we need to push the splitter and find next position
+      this.#splitterHitted.push(potentialNextPosition);
+
+      const leftPosition = this.#findLeftPosition(potentialNextPosition);
+
+      if (leftPosition !== null) {
+        tempCurrentPosition.push(leftPosition);
+      }
+
+      const rightPosition = this.#findRightPosition(potentialNextPosition);
+
+      if (rightPosition !== null) {
+        tempCurrentPosition.push(rightPosition);
+      }
     }
 
-    return rightPosition;
-  };
-
-  const rightPosition = findRightPosition(potentialNextPosition);
-
-  if (rightPosition !== null) {
-    process({
-      splitterHitted,
-      board,
-      currentPosition: rightPosition,
-    });
+    // We are done, let's replace the position to process
+    this.#currentPositions = tempCurrentPosition;
   }
-}
 
-function deduplicateObjects(positions: Position[]) {
-  return positions.filter(
-    (position, index) =>
-      positions.findIndex((p) => p.x === position.x && p.y === position.y) === index,
-  );
+  #findStartingPoint() {
+    // Find the starting position
+    for (let y = 0; y < this.#board.length; y++) {
+      const row = this.#board[y];
+      assertDefined(row);
+
+      for (let x = 0; x < row.length; x++) {
+        const value = row[x];
+        // TODO rtr why I can't use assertDefined? If I use it, I get any on value...
+        if (value === undefined) {
+          throw new Error("Value should be defined");
+        }
+
+        if (value === "S") {
+          return { x, y };
+        }
+      }
+    }
+    throw new Error("Starting point not found");
+  }
+
+  #deduplicateObjects(positions: Position[]) {
+    return positions.filter(
+      (position, index) =>
+        positions.findIndex((p) => p.x === position.x && p.y === position.y) === index,
+    );
+  }
 }
 
 async function main() {
   const lines = await getFileLines(`${__dirname}/input.txt`);
 
   const board = lines.map((line) => line.split("") as Element[]);
-  const startingPoint = findStartingPoint(board);
+  const problem = new Problem(board);
 
-  const splitterHitted: Position[] = [];
-
-  process({ splitterHitted, board, currentPosition: startingPoint });
-
-  let result = deduplicateObjects(splitterHitted).length;
+  let result = problem.process();
 
   console.log("The result is", result);
 }
