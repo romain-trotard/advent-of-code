@@ -10,14 +10,11 @@ type Position = {
 
 class Problem {
   #board: Element[][];
-  #currentPositions: Position[] = [];
-  #currentRow: number = 1;
-  #splitterHitted: Position[] = [];
+  #count = 0;
+  #cache = new Map<`${number}_${number}`, number>();
 
   constructor(board: Element[][]) {
     this.#board = board;
-
-    this.#currentPositions.push(this.#findStartingPoint());
   }
 
   #getWidth() {
@@ -25,15 +22,6 @@ class Problem {
     assertDefined(firstRow);
 
     return firstRow.length;
-  }
-
-  #isAlreadyPresent({ position, positions }: { position: Position; positions: Position[] }) {
-    for (const p of positions) {
-      if (p.x === position.x && p.y === position.y) {
-        return true;
-      }
-    }
-    return false;
   }
 
   #getValue(position: Position): Element {
@@ -57,11 +45,6 @@ class Problem {
     }
 
     if (this.#getValue(rightPosition) === "^") {
-      if (this.#isAlreadyPresent({ position: rightPosition, positions: this.#splitterHitted })) {
-        return null;
-      }
-
-      this.#splitterHitted.push(rightPosition);
       return this.#findRightPosition(rightPosition);
     }
 
@@ -79,11 +62,6 @@ class Problem {
     }
 
     if (this.#getValue(leftPosition) === "^") {
-      if (this.#isAlreadyPresent({ position: leftPosition, positions: this.#splitterHitted })) {
-        return null;
-      }
-
-      this.#splitterHitted.push(leftPosition);
       return this.#findLeftPosition(leftPosition);
     }
 
@@ -91,62 +69,69 @@ class Problem {
   }
 
   process() {
-    for (let i = 1; i < this.#board.length; i++) {
-      this.#processRow();
-    }
+    const total = this.processPosition(this.#findStartingPoint(), 0);
 
-    return this.#deduplicateObjects(this.#splitterHitted).length;
+    return total;
   }
 
-  #processRow() {
-    const tempCurrentPosition: Position[] = [];
-
-    for (const currentPosition of this.#currentPositions) {
-      const potentialNextPosition = {
-        ...currentPosition,
-        y: currentPosition.y + 1,
+  #findNextSplitterPosition(position: Position): Position {
+    for (let y = position.y + 1; y < this.#board.length; y++) {
+      const p = {
+        ...position,
+        y,
       };
-
-      const value = this.#getValue(potentialNextPosition);
-
-      // We can go on this position, it's over
-      if (value === ".") {
-        if (
-          !this.#isAlreadyPresent({
-            positions: tempCurrentPosition,
-            position: potentialNextPosition,
-          })
-        ) {
-          tempCurrentPosition.push(potentialNextPosition);
-        }
-        continue;
-      }
-
-      // If the splitter is already here we are done
-      if (
-        this.#isAlreadyPresent({ positions: this.#splitterHitted, position: potentialNextPosition })
-      ) {
-        continue;
-      }
-
-      // Otherwise there is something we need to push the splitter and find next position
-      this.#splitterHitted.push(potentialNextPosition);
-
-      const leftPosition = this.#findLeftPosition(potentialNextPosition);
-
-      if (leftPosition !== null) {
-        tempCurrentPosition.push(leftPosition);
-      }
-
-      const rightPosition = this.#findRightPosition(potentialNextPosition);
-
-      if (rightPosition !== null) {
-        tempCurrentPosition.push(rightPosition);
+      if (this.#getValue(p) === "^") {
+        return p;
       }
     }
 
-    // We are done, let's replace the position to process
-    this.#currentPositions = tempCurrentPosition;
+    return {
+      ...position,
+      y: this.#board.length - 1,
+    };
+  }
+
+  processPosition(position: Position, count: number) {
+    // find the lowest position with a splitter
+    const nextSplitterPosition = this.#findNextSplitterPosition(position);
+
+    // We are done
+    if (nextSplitterPosition.y >= this.#board.length - 1) {
+      return 1;
+    }
+
+    // Time to split an recurse the algo
+    const leftPosition = this.#findLeftPosition(nextSplitterPosition);
+
+    if (leftPosition !== null) {
+      const cacheKey = `${leftPosition.x}_${leftPosition.y}` as const;
+      const cacheCount = this.#cache.get(cacheKey);
+
+      if (cacheCount !== undefined) {
+        count += cacheCount;
+      } else {
+        const currentCount = this.processPosition(leftPosition, 0);
+        this.#cache.set(cacheKey, currentCount);
+        count += currentCount;
+      }
+    }
+
+    const rightPosition = this.#findRightPosition(nextSplitterPosition);
+
+    if (rightPosition !== null) {
+      const cacheKey = `${rightPosition.x}_${rightPosition.y}` as const;
+      const cacheCount = this.#cache.get(cacheKey);
+
+      if (cacheCount !== undefined) {
+        count += cacheCount;
+      } else {
+        const currentCount = this.processPosition(rightPosition, 0);
+        this.#cache.set(`${rightPosition.x}_${rightPosition.y}`, currentCount);
+        count += currentCount;
+      }
+    }
+
+    return count;
   }
 
   #findStartingPoint() {
@@ -168,13 +153,6 @@ class Problem {
       }
     }
     throw new Error("Starting point not found");
-  }
-
-  #deduplicateObjects(positions: Position[]) {
-    return positions.filter(
-      (position, index) =>
-        positions.findIndex((p) => p.x === position.x && p.y === position.y) === index,
-    );
   }
 }
 
