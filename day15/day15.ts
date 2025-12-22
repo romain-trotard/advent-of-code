@@ -10,6 +10,13 @@ const BOX = 'O';
 const WALL = '#';
 const FREE = '.';
 
+const NEW_ROBOT = '@.';
+const NEW_BOX = '[]';
+const NEW_WALL = '##';
+const NEW_FREE = '..';
+
+const NEW_STARTING_BOX = '[';
+
 const EXTRA_CALC = 100;
 
 function getDirection(value: string): Direction {
@@ -47,9 +54,12 @@ class Game {
             }
 
             switch (mode) {
-                case "board":
-                    this.#board.push(line.split(''));
+                case "board": {
+                    const newLine = line.replaceAll(BOX, NEW_BOX).replaceAll(WALL, NEW_WALL).replaceAll(FREE, NEW_FREE).replaceAll(ROBOT, NEW_ROBOT);
+                    console.log(newLine);
+                    this.#board.push(newLine.split(''));
                     break;
+                }
                 case "movements": {
                     this.#movements += line;
                     break
@@ -238,11 +248,13 @@ class Game {
             const line = this.#board[y];
             assertDefined(line);
 
+            // console.log(line);
+
             for (let x = 0; x < line.length; x++) {
                 const value: string | undefined = line[x];
                 assertDefined(value);
 
-                if (value === BOX) {
+                if (value === NEW_STARTING_BOX) {
                     result += EXTRA_CALC * y + x;
                 }
             }
