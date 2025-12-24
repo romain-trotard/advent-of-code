@@ -63,17 +63,51 @@ async function main() {
         shortestPositionByPosition.set(position, minDistance.position);
     }
 
-    // Time to get circuits
+    const allPositions = positions.reduce((acc, position) => {
+        acc.set(getKey(position), { mapped: false, position });
+        return acc;
+    }, new Map<`${number}_${number}_${number}`, { mapped: boolean; position: Position}>());
+
     const circuits: Array<Set<`${number}_${number}_${number}`>> = [];
 
-    for (const [p1, p2] of shortestPositionByPosition.entries()) {
-        const p1Key = getKey(p1);
-        const p2Key = getKey(p2);
+    let positionsToProcess = [...allPositions.values().filter(p => !p.mapped)];
+
+    while (positionsToProcess.length > 0) {
+        for (const p of positionsToProcess) {
+            const position = p.position;
+            // Find the shortest position for each one
+            const filtered = positions.filter(p => getKey(p) !== getKey(position));
+        let minDistance: {
+            distance: number;
+            position: Position;
+        } | null = null;
+
+        for (const p of filtered) {
+            const distance = calculateDistance(position, p);
+
+            if (minDistance === null) {
+                minDistance = {
+                    distance,
+                    position: p,
+                }
+                continue;
+            }
+
+            if (minDistance.distance > distance) {
+                minDistance = {
+                    distance,
+                    position: p,
+                }
+            }
+        }
+
+        assertDefined(minDistance);
+        // shortestPositionByPosition.set(position, minDistance.position);
+        const p1Key = getKey(position);
+        const p2Key = getKey(minDistance.position);
 
         let match = false;
 
-        // If p1 is already in one circuit we add p2 in it
-        // Otherwise if p2 is in one circuit we add p1 in it
         for (const circuit of circuits) {
             if (circuit.has(p1Key)) {
                 circuit.add(p2Key);
@@ -91,8 +125,43 @@ async function main() {
         if (!match) {
             circuits.push(new Set([p1Key, p2Key]))
         }
+
+        allPositions.get(p1Key)!.mapped = true;
+            allPositions.get(p2Key)!.mapped = true;
+
+            positionsToProcess = [...allPositions.values().filter(p => !p.mapped)];
+        }
     }
 
+    // for (const [p1, p2] of shortestPositionByPosition.entries()) {
+    //     const p1Key = getKey(p1);
+
+    //
+    //     let match = false;
+    //
+    //     // If p1 is already in one circuit we add p2 in it
+    //     // Otherwise if p2 is in one circuit we add p1 in it
+    //     for (const circuit of circuits) {
+    //         if (circuit.has(p1Key)) {
+    //             circuit.add(p2Key);
+    //         console.log('Adding p2', { circuit, p1Key, p2Key });
+    //             match = true;
+    //             break;
+    //         }
+    //
+    //         if (circuit.has(p2Key)) {
+    //             circuit.add(p1Key);
+    //         console.log('Adding p1', { circuit, p2Key, p1Key });
+    //             match = true;
+    //             break;
+    //         }
+    //     }
+    //
+    //     if (!match) {
+    //         circuits.push(new Set([p1Key, p2Key]))
+    //         console.log('Adding', { p1Key, p2Key });
+    //     }
+    // }
     console.log(circuits);
 
     let result = circuits.reduce((acc, circuit) => {
